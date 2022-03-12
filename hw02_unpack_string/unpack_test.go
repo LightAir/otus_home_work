@@ -17,10 +17,16 @@ func TestUnpack(t *testing.T) {
 		{input: "", expected: ""},
 		{input: "aaa0b", expected: "aab"},
 		// uncomment if task with asterisk completed
-		// {input: `qwe\4\5`, expected: `qwe45`},
-		// {input: `qwe\45`, expected: `qwe44444`},
-		// {input: `qwe\\5`, expected: `qwe\\\\\`},
-		// {input: `qwe\\\3`, expected: `qwe\3`},
+		{input: `qwe\4\5`, expected: `qwe45`},
+		{input: `qwe\45`, expected: `qwe44444`},
+		{input: `qwe\\5`, expected: `qwe\\\\\`},
+		{input: `qwe\\\3`, expected: `qwe\3`},
+		// users test
+		{input: `qwe\\9eg4`, expected: `qwe\\\\\\\\\egggg`},
+		{input: `q0d0f0r0a0c0`, expected: ``},
+		{input: `q1`, expected: `q`},
+		{input: `f`, expected: `f`},
+		{input: `golang\4best`, expected: `golang4best`},
 	}
 
 	for _, tc := range tests {
@@ -34,7 +40,21 @@ func TestUnpack(t *testing.T) {
 }
 
 func TestUnpackInvalidString(t *testing.T) {
-	invalidStrings := []string{"3abc", "45", "aaa10b"}
+	invalidStrings := []string{
+		"3abc",
+		"45",
+		"aaa10b",
+		"0x123",
+		"0b0101010",
+		`golang\'`,
+		`\t`,
+		`\#`,
+		`\'`,
+		`\n\r`,
+		`go\'lang`,
+		`\`,
+		`\👾`,
+	}
 	for _, tc := range invalidStrings {
 		tc := tc
 		t.Run(tc, func(t *testing.T) {
