@@ -31,18 +31,10 @@ func (l list) Len() int {
 }
 
 func (l list) Front() *ListItem {
-	if l.Size == 0 {
-		return nil
-	}
-
 	return l.First
 }
 
 func (l list) Back() *ListItem {
-	if l.Size == 0 {
-		return nil
-	}
-
 	return l.Last
 }
 
@@ -59,17 +51,12 @@ func (l *list) PushFront(v interface{}) *ListItem {
 		l.First = newNode
 		l.Last = newNode
 
-		return l.First
+		return newNode
 	}
-
-	node := l.First
-
-	newNode.Next = node
-	if node.Prev == nil {
-		l.First = newNode
-	}
-
-	node.Prev = newNode
+	oldNode := l.First
+	newNode.Next = oldNode
+	l.First = newNode
+	l.First.Next.Prev = newNode
 
 	return newNode
 }

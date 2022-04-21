@@ -34,9 +34,9 @@ func (l *lruCache) Get(key Key) (interface{}, bool) {
 	l.lock.Lock()
 	defer l.lock.Unlock()
 
-	lItem := l.items[key]
+	lItem, ok := l.items[key]
 
-	if lItem == nil {
+	if !ok {
 		return nil, false
 	}
 
@@ -50,7 +50,7 @@ func (l *lruCache) Set(key Key, value interface{}) bool {
 	l.lock.Lock()
 	defer l.lock.Unlock()
 
-	isKeyExist := l.items[key] != nil
+	_, isKeyExist := l.items[key]
 
 	if isKeyExist {
 		l.queue.Remove(l.items[key])
@@ -58,7 +58,7 @@ func (l *lruCache) Set(key Key, value interface{}) bool {
 		cItem := l.queue.Back().Value.(cacheItem)
 
 		l.queue.Remove(l.items[cItem.key])
-		l.items[cItem.key] = nil
+		delete(l.items, cItem.key)
 	}
 
 	l.items[key] = l.queue.PushFront(cacheItem{key: key, value: value})
