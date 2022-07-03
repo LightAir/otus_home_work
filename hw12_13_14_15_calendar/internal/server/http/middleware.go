@@ -2,10 +2,26 @@ package internalhttp
 
 import (
 	"net/http"
+	"time"
 )
 
-func loggingMiddleware(next http.Handler) http.Handler {
+type ResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (rw *ResponseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+}
+
+func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// TODO
+		rw := &ResponseWriter{w, 0}
+		start := time.Now()
+
+		next.ServeHTTP(rw, r)
+
+		duration := time.Since(start)
+		s.logger.LogHTTPRequest(r, duration, rw.statusCode)
 	})
 }
