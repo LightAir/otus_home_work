@@ -2,12 +2,9 @@ package main
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"flag"
 	"fmt"
 	"log"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -15,12 +12,10 @@ import (
 	"github.com/LightAir/otus_home_work/hw12_13_14_15_calendar/internal/app"
 	"github.com/LightAir/otus_home_work/hw12_13_14_15_calendar/internal/config"
 	"github.com/LightAir/otus_home_work/hw12_13_14_15_calendar/internal/logger"
+	internalgrpc "github.com/LightAir/otus_home_work/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/LightAir/otus_home_work/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/LightAir/otus_home_work/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/LightAir/otus_home_work/hw12_13_14_15_calendar/internal/storage/sql"
-	migrate "github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/pgx"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
@@ -30,47 +25,19 @@ func init() {
 	flag.StringVar(&configFile, "config", "/etc/calendar/config.yaml", "Path to configuration file")
 }
 
-func initStorage(cfg *config.Config, dsn string) (app.Storage, error) {
+func initStorage(cfg *config.Config) (app.Storage, error) {
 	switch cfg.DB.Type {
 	case "mem":
 		return memorystorage.New(), nil
 	case "sql":
+		s := cfg.DB.SQL
+
+		dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", s.User, s.Password, s.Host, s.Port, s.Name)
+
 		return sqlstorage.New(cfg, dsn), nil
 	}
 
 	return nil, fmt.Errorf("unknown database type: %q", cfg.DB.Type)
-}
-
-func buildDsn(cfg *config.Config) string {
-	s := cfg.DB.SQL
-	return "postgres://" + s.User + ":" + s.Password + "@" + s.Host + ":" + s.Port + "/" + s.Name + "?sslmode=disable"
-}
-
-func migrations(cfg *config.Config, dsn string) {
-	if cfg.DB.Type != "sql" {
-		return
-	}
-
-	db, err := sql.Open(cfg.DB.SQL.Driver, dsn)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	driver, err := pgx.WithInstance(db, &pgx.Config{})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	m, err := migrate.NewWithDatabaseInstance("file://./migrations/", "postgres", driver)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := m.Up(); err != nil {
-		if !errors.Is(err, migrate.ErrNoChange) {
-			log.Fatal(err)
-		}
-	}
 }
 
 func main() {
@@ -86,13 +53,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	dsn := buildDsn(cfg)
-
-	migrations(cfg, dsn)
-
 	logg := logger.New(cfg.Logger.Level)
 
-	storage, err := initStorage(cfg, dsn)
+	storage, err := initStorage(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -123,9 +86,21 @@ func main() {
 
 	logg.Info("calendar is running...")
 
-	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
-		cancel()
-		os.Exit(1) //nolint:gocritic
-	}
+	go func() {
+		if err := server.Start(ctx); err != nil {
+			logg.Error("failed to start http server: " + err.Error())
+			cancel()
+		}
+	}()
+
+	GRPCServer := internalgrpc.NewGRPCServer(logg, calendar, cfg)
+
+	go func() {
+		if err := GRPCServer.Start(ctx); err != nil {
+			logg.Error("failed to start grpc server: " + err.Error())
+			cancel()
+		}
+	}()
+
+	<-ctx.Done()
 }

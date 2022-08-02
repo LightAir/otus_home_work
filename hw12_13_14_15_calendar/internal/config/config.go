@@ -1,9 +1,10 @@
 package config
 
 type Config struct {
-	Logger LoggerConf
-	DB     DB
-	Server Server
+	Logger     LoggerConf
+	DB         DB
+	Server     Server
+	GRPCServer GRPCServer
 }
 
 type LoggerConf struct {
@@ -25,6 +26,11 @@ type SQLDatabase struct {
 }
 
 type Server struct {
+	Port string
+	Host string
+}
+
+type GRPCServer struct {
 	Port string
 	Host string
 }

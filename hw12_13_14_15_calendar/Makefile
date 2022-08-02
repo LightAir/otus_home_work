@@ -1,6 +1,8 @@
 BIN := "./bin/calendar"
 DOCKER_IMG="calendar:develop"
 
+MIGRATION := "./bin/migration"
+
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
@@ -37,4 +39,13 @@ up-docker:
 down-docker:
 	docker-compose -f deployments/docker-compose.yaml down
 
-.PHONY: build run build-img run-img version test lint
+generate:
+	go generate ./...
+
+build-migrations:
+	go build -v -o $(MIGRATION) ./cmd/migration
+
+migrate: build-migrations
+	$(MIGRATION) --config=./configs/config.yaml
+
+.PHONY: build run build-img run-img version test lint up-docker down-docker generate migrate build-migrations

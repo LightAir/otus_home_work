@@ -17,6 +17,9 @@ issues:
         - dupl
         - gocyclo
         - gosec
+        - prealloc
+        - funlen
+        - noctx
 
 linters:
   disable-all: true
