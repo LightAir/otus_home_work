@@ -1,14 +1,14 @@
 package config
 
 import (
-	"io/ioutil"
 	"log"
+	"os"
 
 	yaml "gopkg.in/yaml.v3"
 )
 
 func Parse(filePath string) (*Config, error) {
-	configData, err := ioutil.ReadFile(filePath)
+	configData, err := os.ReadFile(filePath)
 	if err != nil {
 		log.Fatal(err)
 	}

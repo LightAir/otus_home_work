@@ -1,8 +1,6 @@
 package memorystorage
 
 import (
-	"context"
-	"database/sql"
 	"sync"
 	"testing"
 	"time"
@@ -19,32 +17,34 @@ func getEvents(firstID uuid.UUID, secondID uuid.UUID, userID uuid.UUID) map[uuid
 			Title:         "Test title",
 			DatetimeStart: time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 			DatetimeEnd:   time.Date(2009, time.November, 10, 23, 15, 0, 0, time.UTC),
-			Description: sql.NullString{
-				String: "just description",
-				Valid:  true,
-			},
-			UserID: userID,
-			WhenToNotify: sql.NullString{
-				String: "newer",
-				Valid:  true,
-			},
+			Description:   "just description",
+			UserID:        userID,
+			WhenToNotify:  "newer",
 		},
 		secondID: {
 			ID:            secondID,
 			Title:         "Test title",
 			DatetimeStart: time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 			DatetimeEnd:   time.Date(2009, time.November, 11, 23, 15, 0, 0, time.UTC),
-			Description: sql.NullString{
-				String: "just description",
-				Valid:  true,
-			},
-			UserID: userID,
-			WhenToNotify: sql.NullString{
-				String: "newer",
-				Valid:  true,
-			},
+			Description:   "just description",
+			UserID:        userID,
+			WhenToNotify:  "newer",
 		},
 	}
+}
+
+func getDateRange(startDate time.Time) (*storage2.DateRange, error) {
+	start, err := time.Parse("2006-01-02", startDate.Format("2006-01-02"))
+	if err != nil {
+		return nil, err
+	}
+
+	end := start.AddDate(0, 0, 1)
+
+	return &storage2.DateRange{
+		Start: start,
+		End:   end,
+	}, nil
 }
 
 func TestStorage(t *testing.T) {
@@ -52,13 +52,8 @@ func TestStorage(t *testing.T) {
 	secondID := uuid.New()
 	userID := uuid.New()
 
-	ctx := context.Background()
-
 	t.Run("base tests", func(t *testing.T) {
 		storage := New()
-
-		ctx := context.Background()
-		_ = storage.Connect(ctx)
 
 		events := getEvents(firstID, secondID, userID)
 		err := storage.AddEvent(events[firstID])
@@ -67,14 +62,17 @@ func TestStorage(t *testing.T) {
 		err = storage.AddEvent(events[secondID])
 		require.Nil(t, err)
 
-		result, err := storage.ListEventsByUserID(userID)
+		dateRange, err := getDateRange(events[secondID].DatetimeStart)
+		require.Nil(t, err)
+
+		result, err := storage.ListEventsByRange(*dateRange)
 		require.Nil(t, err)
 		require.Equal(t, events, result)
 
 		err = storage.RemoveEvent(firstID)
 		require.Nil(t, err)
 
-		result, err = storage.ListEventsByUserID(userID)
+		result, err = storage.ListEventsByRange(*dateRange)
 		require.Nil(t, err)
 		delete(events, firstID)
 		require.Equal(t, events, result)
@@ -82,7 +80,7 @@ func TestStorage(t *testing.T) {
 		err = storage.RemoveEvent(secondID)
 		require.Nil(t, err)
 
-		result, err = storage.ListEventsByUserID(userID)
+		result, err = storage.ListEventsByRange(*dateRange)
 		require.Nil(t, err)
 		delete(events, secondID)
 		require.Equal(t, events, result)
@@ -93,7 +91,6 @@ func TestStorage(t *testing.T) {
 
 	t.Run("already exist tests", func(t *testing.T) {
 		storage := New()
-		_ = storage.Connect(ctx)
 
 		events := getEvents(firstID, secondID, userID)
 		err := storage.AddEvent(events[firstID])
@@ -108,7 +105,6 @@ func TestStorage(t *testing.T) {
 
 	t.Run("notfound tests", func(t *testing.T) {
 		storage := New()
-		_ = storage.Connect(ctx)
 
 		err := storage.RemoveEvent(firstID)
 		require.ErrorIs(t, err, errEventNotFound)
@@ -123,7 +119,6 @@ func TestStorage(t *testing.T) {
 
 	t.Run("change event", func(t *testing.T) {
 		storage := New()
-		_ = storage.Connect(ctx)
 
 		events := getEvents(firstID, secondID, userID)
 		err := storage.AddEvent(events[firstID])
@@ -135,7 +130,10 @@ func TestStorage(t *testing.T) {
 		err = storage.ChangeEvent(firstID, event)
 		require.Nil(t, err)
 
-		result, err := storage.ListEventsByUserID(event.UserID)
+		dateRange, err := getDateRange(events[secondID].DatetimeStart)
+		require.Nil(t, err)
+
+		result, err := storage.ListEventsByRange(*dateRange)
 		require.Nil(t, err)
 		require.Equal(t, map[uuid.UUID]storage2.Event{firstID: event}, result)
 
@@ -146,7 +144,7 @@ func TestStorage(t *testing.T) {
 
 func TestCacheMultithreading(t *testing.T) {
 	storage := New()
-	_ = storage.Connect(context.Background())
+
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 
@@ -161,15 +159,9 @@ func TestCacheMultithreading(t *testing.T) {
 				Title:         "Test title",
 				DatetimeStart: timeStart,
 				DatetimeEnd:   timeEnd,
-				Description: sql.NullString{
-					String: "just description",
-					Valid:  true,
-				},
-				UserID: userID,
-				WhenToNotify: sql.NullString{
-					String: "newer",
-					Valid:  true,
-				},
+				Description:   "just description",
+				UserID:        userID,
+				WhenToNotify:  "newer",
 			}
 			err := storage.AddEvent(event)
 			require.Nil(t, err)
@@ -184,15 +176,9 @@ func TestCacheMultithreading(t *testing.T) {
 				Title:         "Test title",
 				DatetimeStart: timeStart,
 				DatetimeEnd:   timeEnd,
-				Description: sql.NullString{
-					String: "just description",
-					Valid:  true,
-				},
-				UserID: userID,
-				WhenToNotify: sql.NullString{
-					String: "newer",
-					Valid:  true,
-				},
+				Description:   "just description",
+				UserID:        userID,
+				WhenToNotify:  "newer",
 			}
 			err := storage.AddEvent(event)
 			require.Nil(t, err)

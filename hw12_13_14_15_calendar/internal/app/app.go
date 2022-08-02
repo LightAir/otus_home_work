@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/LightAir/otus_home_work/hw12_13_14_15_calendar/internal/config"
 	"github.com/LightAir/otus_home_work/hw12_13_14_15_calendar/internal/storage"
@@ -21,7 +23,7 @@ type Storage interface { // TODO
 	AddEvent(event storage.Event) error
 	ChangeEvent(id uuid.UUID, event storage.Event) error
 	RemoveEvent(id uuid.UUID) error
-	ListEventsByUserID(userID uuid.UUID) (map[uuid.UUID]storage.Event, error)
+	ListEventsByRange(p storage.DateRange) (map[uuid.UUID]storage.Event, error)
 	Connect(ctx context.Context) error
 	Close() error
 }
@@ -34,10 +36,67 @@ func New(logger Logger, storage Storage, cfg *config.Config) *App {
 	}
 }
 
-func (a *App) CreateEvent(ctx context.Context, id, title string) error {
-	// TODO
-	return nil
-	// return a.storage.CreateEvent(storage.Event{ID: id, Title: title})
+func buildEvent(id, title, start, end, desc, userID, when string) (*storage.Event, error) {
+	dateStart, err := time.Parse(time.RFC3339, start)
+	if err != nil {
+		return nil, fmt.Errorf("bad start date. %w", err)
+	}
+
+	dateEnd, err := time.Parse(time.RFC3339, end)
+	if err != nil {
+		return nil, fmt.Errorf("bad end date. %w", err)
+	}
+
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, fmt.Errorf("bad Id. %w", err)
+	}
+
+	parsedUserID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, fmt.Errorf("bad userId. %w", err)
+	}
+
+	event := &storage.Event{
+		ID:            parsedID,
+		Title:         title,
+		DatetimeStart: dateStart,
+		DatetimeEnd:   dateEnd,
+		Description:   desc,
+		UserID:        parsedUserID,
+		WhenToNotify:  when,
+	}
+
+	return event, nil
 }
 
-// TODO
+func (a *App) CreateEvent(id, title, start, end, desc, userID, when string) error {
+	event, err := buildEvent(id, title, start, end, desc, userID, when)
+	if err != nil {
+		return err
+	}
+
+	return a.storage.AddEvent(*event)
+}
+
+func (a *App) UpdateEvent(id, title, start, end, desc, userID, when string) error {
+	event, err := buildEvent(id, title, start, end, desc, userID, when)
+	if err != nil {
+		return err
+	}
+
+	return a.storage.ChangeEvent(event.ID, *event)
+}
+
+func (a *App) DeleteEvent(id string) error {
+	return a.storage.RemoveEvent(uuid.MustParse(id))
+}
+
+func (a *App) FindEventsByPeriod(start, end time.Time) (map[uuid.UUID]storage.Event, error) {
+	dateRange := storage.DateRange{
+		Start: start,
+		End:   end,
+	}
+
+	return a.storage.ListEventsByRange(dateRange)
+}

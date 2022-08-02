@@ -50,7 +50,8 @@ func (s *Storage) ChangeEvent(id uuid.UUID, event storage.Event) error {
 				description = $4,
 				user_id = $5,
 				when_to_notify = $6
-			  where id = $7`
+			  where
+			    id = $7`
 
 	_, err := s.db.ExecContext(
 		s.ctx,
@@ -78,7 +79,7 @@ func (s *Storage) RemoveEvent(id uuid.UUID) error {
 	return nil
 }
 
-func (s *Storage) ListEventsByUserID(userID uuid.UUID) (map[uuid.UUID]storage.Event, error) {
+func (s *Storage) ListEventsByRange(p storage.DateRange) (map[uuid.UUID]storage.Event, error) {
 	query := `select 
     			id,
     			title,
@@ -89,9 +90,10 @@ func (s *Storage) ListEventsByUserID(userID uuid.UUID) (map[uuid.UUID]storage.Ev
     			when_to_notify as whenToNotify
 			  from
 			    events
-			  where user_id = $1`
+			  where
+			    (datetime_start >= $1 and datetime_start <= $2) or (datetime_end >= $1 and datetime_end <= $2)`
 
-	rows, err := s.db.QueryxContext(s.ctx, query, userID)
+	rows, err := s.db.QueryxContext(s.ctx, query, p.Start.Format(time.RFC3339), p.End.Format(time.RFC3339))
 	if err != nil {
 		return nil, err
 	}
