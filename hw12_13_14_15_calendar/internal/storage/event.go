@@ -13,5 +13,6 @@ type Event struct {
 	DatetimeEnd   time.Time // Дата и время окончания события
 	Description   string    // Описание события - длинный текст, опционально
 	UserID        uuid.UUID // ID пользователя, владельца события
-	WhenToNotify  string    // За сколько времени высылать уведомление, опционально.
+	IsNotified    bool      // Было ли отправлено уведомление
+	WhenToNotify  time.Time // За сколько времени высылать уведомление, опционально.
 }

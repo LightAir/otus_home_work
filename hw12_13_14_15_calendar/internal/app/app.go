@@ -10,16 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type App struct {
-	config  config.Config
-	storage Storage
-	logger  Logger
-}
-
-type Logger interface { // TODO
-}
-
-type Storage interface { // TODO
+type Storage interface {
 	AddEvent(event storage.Event) error
 	ChangeEvent(id uuid.UUID, event storage.Event) error
 	RemoveEvent(id uuid.UUID) error
@@ -28,11 +19,15 @@ type Storage interface { // TODO
 	Close() error
 }
 
-func New(logger Logger, storage Storage, cfg *config.Config) *App {
+type App struct {
+	config  config.Config
+	storage Storage
+}
+
+func New(storage Storage, cfg *config.Config) *App {
 	return &App{
 		config:  *cfg,
 		storage: storage,
-		logger:  logger,
 	}
 }
 
@@ -57,6 +52,11 @@ func buildEvent(id, title, start, end, desc, userID, when string) (*storage.Even
 		return nil, fmt.Errorf("bad userId. %w", err)
 	}
 
+	dateWhen, err := time.Parse(time.RFC3339, when)
+	if err != nil {
+		return nil, fmt.Errorf("bad when date. %w", err)
+	}
+
 	event := &storage.Event{
 		ID:            parsedID,
 		Title:         title,
@@ -64,7 +64,7 @@ func buildEvent(id, title, start, end, desc, userID, when string) (*storage.Even
 		DatetimeEnd:   dateEnd,
 		Description:   desc,
 		UserID:        parsedUserID,
-		WhenToNotify:  when,
+		WhenToNotify:  dateWhen,
 	}
 
 	return event, nil

@@ -37,7 +37,7 @@ func prepareServer() *Server {
 	cfg := &config.Config{}
 	logg := &Log{}
 
-	calendar := app.New(logg, memorystorage.New(), cfg)
+	calendar := app.New(memorystorage.New(), cfg)
 	return NewServer(logg, calendar, cfg)
 }
 
@@ -62,6 +62,11 @@ func getEventResponse(t *testing.T, event *EventRequest) (string, error) {
 		return "", err
 	}
 
+	dateWhen, err := time.Parse(time.RFC3339, event.When)
+	if err != nil {
+		return "", err
+	}
+
 	eventResponse := storage.Event{
 		ID:            uuid.MustParse(event.ID),
 		Title:         event.Title,
@@ -69,7 +74,7 @@ func getEventResponse(t *testing.T, event *EventRequest) (string, error) {
 		DatetimeEnd:   dateEnd,
 		Description:   event.Desc,
 		UserID:        uuid.MustParse(event.UserID),
-		WhenToNotify:  event.When,
+		WhenToNotify:  dateWhen,
 	}
 
 	eventResponseByte, err := json.Marshal(eventResponse)
@@ -88,7 +93,7 @@ func TestServer(t *testing.T) {
 		End:    "2010-01-01T08:00:00Z",
 		Desc:   "new year",
 		UserID: "9591d712-1b3e-4495-bb71-08c906273a09",
-		When:   "never",
+		When:   "2009-12-31T23:59:59Z",
 	}
 
 	t.Run("createEventHandler bad json", func(t *testing.T) {

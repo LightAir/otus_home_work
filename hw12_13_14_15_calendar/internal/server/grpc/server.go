@@ -147,7 +147,7 @@ func (srv *GRPCServer) getEventListOfPeriod(request *DateRequest, period Period)
 			DatetimeEnd:   item.DatetimeEnd.Format(time.RFC3339),
 			Description:   item.Description,
 			UserId:        item.UserID.String(),
-			WhenToNotify:  item.WhenToNotify,
+			WhenToNotify:  item.WhenToNotify.Format(time.RFC3339),
 		}
 		events = append(events, event)
 	}
