@@ -1,14 +1,6 @@
 logger:
   level: "info"
 
-server:
-  host: 127.0.0.1
-  port: 2014
-
-grpcserver:
-  host: 127.0.0.1
-  port: 2022
-
 db:
   type: "sql"
   sql:
@@ -24,3 +16,5 @@ rmq:
   port: 5672
   user: guest
   pswd: guest
+
+queuename: "sender"

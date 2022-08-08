@@ -1,13 +1,17 @@
 BIN := "./bin/calendar"
-DOCKER_IMG="calendar:develop"
+BIN_SCHEDULER := "./bin/calendar_scheduler"
+BIN_SENDER := "./bin/calendar_sender"
+BIN_MIGRATION := "./bin/migration"
 
-MIGRATION := "./bin/migration"
+DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o $(BIN_SCHEDULER) -ldflags "$(LDFLAGS)" ./cmd/calendar_scheduler
+	go build -v -o $(BIN_SENDER) -ldflags "$(LDFLAGS)" ./cmd/calendar_sender
 
 run: build
 	$(BIN) -config ./configs/config.yaml
@@ -33,19 +37,19 @@ install-lint-deps:
 lint: install-lint-deps
 	golangci-lint run ./...
 
-up-docker:
+up:
 	docker-compose -f deployments/docker-compose.yaml up -d
 
-down-docker:
+down:
 	docker-compose -f deployments/docker-compose.yaml down
 
 generate:
 	go generate ./...
 
 build-migrations:
-	go build -v -o $(MIGRATION) ./cmd/migration
+	go build -v -o $(BIN_MIGRATION) ./cmd/migration
 
 migrate: build-migrations
-	$(MIGRATION) --config=./configs/config.yaml
+	$(BIN_MIGRATION) --config=./configs/config.yaml
 
-.PHONY: build run build-img run-img version test lint up-docker down-docker generate migrate build-migrations
+.PHONY: build run build-img run-img version test lint up down generate migrate build-migrations

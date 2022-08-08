@@ -23,7 +23,7 @@ func prepareServer() *GRPCServer {
 	cfg := &config.Config{}
 	logg := &Log{}
 
-	calendar := app.New(logg, memorystorage.New(), cfg)
+	calendar := app.New(memorystorage.New(), cfg)
 	return NewGRPCServer(logg, calendar, cfg)
 }
 
@@ -70,7 +70,7 @@ func TestServer(t *testing.T) {
 					DatetimeEnd:   "2010-05-12T10:10:20Z",
 					Description:   "",
 					UserId:        "872e211d-4f73-4564-816d-adcfd77a2450",
-					WhenToNotify:  "",
+					WhenToNotify:  "2010-05-12T10:10:20Z",
 				},
 				result: 1,
 				err:    "",
@@ -83,7 +83,7 @@ func TestServer(t *testing.T) {
 					DatetimeEnd:   "2010-05-12T10:10:20Z",
 					Description:   "",
 					UserId:        "872e211d-4f73-4564-816d-adcfd77a2450",
-					WhenToNotify:  "",
+					WhenToNotify:  "2010-05-12T10:10:20Z",
 				},
 				result: 0,
 				err:    "event already exist",
@@ -113,6 +113,19 @@ func TestServer(t *testing.T) {
 				},
 				result: 0,
 				err:    "bad Id. invalid UUID length: 0",
+			},
+			{
+				event: &Event{
+					Id:            "9a66db8d-5714-4276-b860-852d888c95a9",
+					Title:         "test",
+					DatetimeStart: "2010-05-12T10:10:20Z",
+					DatetimeEnd:   "2010-05-12T10:10:20Z",
+					Description:   "",
+					UserId:        "9a66db8d-5714-4276-b860-852d888c95a9",
+					WhenToNotify:  "",
+				},
+				result: 0,
+				err:    "bad when date. parsing time \"\" as \"2006-01-02T15:04:05Z07:00\": cannot parse \"\" as \"2006\"",
 			},
 		}
 
@@ -171,7 +184,7 @@ func TestServer(t *testing.T) {
 					DatetimeEnd:   "2010-05-12T10:10:20Z",
 					Description:   "",
 					UserId:        "872e211d-4f73-4564-816d-adcfd77a2450",
-					WhenToNotify:  "",
+					WhenToNotify:  "2010-05-12T10:10:20Z",
 				},
 				result: 0,
 				err:    "event not found",
@@ -184,7 +197,7 @@ func TestServer(t *testing.T) {
 					DatetimeEnd:   "2010-05-12T10:10:20Z",
 					Description:   "",
 					UserId:        "872e211d-4f73-4564-816d-adcfd77a2450",
-					WhenToNotify:  "",
+					WhenToNotify:  "2010-05-12T10:10:20Z",
 				},
 				result: 1,
 				err:    "",
@@ -195,7 +208,7 @@ func TestServer(t *testing.T) {
 					DatetimeEnd:   "2010-05-12T10:10:20Z",
 					Description:   "",
 					UserId:        "9a66db8d-5714-4276-b860-852d888c95a9",
-					WhenToNotify:  "",
+					WhenToNotify:  "2010-05-12T10:10:20Z",
 				},
 			},
 			{
@@ -268,7 +281,7 @@ func TestServer(t *testing.T) {
 					DatetimeEnd:   "2010-05-12T10:10:20Z",
 					Description:   "",
 					UserId:        "9a66db8d-5714-4276-b860-852d888c95a9",
-					WhenToNotify:  "",
+					WhenToNotify:  "2010-05-12T10:10:20Z",
 				},
 			},
 		}

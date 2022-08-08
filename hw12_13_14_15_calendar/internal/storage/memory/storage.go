@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/LightAir/otus_home_work/hw12_13_14_15_calendar/internal/storage"
 	"github.com/google/uuid"
@@ -78,6 +79,18 @@ func (s *Storage) ListEventsByRange(p storage.DateRange) (map[uuid.UUID]storage.
 	}
 
 	return result, nil
+}
+
+func (s *Storage) RemoveOldEvents(datetime time.Time) error {
+	return nil
+}
+
+func (s *Storage) ListEventsForNotification(datetime time.Time) (map[uuid.UUID]storage.Event, error) {
+	return nil, nil
+}
+
+func (s *Storage) SetIsNotified(id uuid.UUID) error {
+	return nil
 }
 
 func (s *Storage) Connect(_ context.Context) error {

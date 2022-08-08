@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"os/signal"
 	"syscall"
@@ -14,8 +13,7 @@ import (
 	"github.com/LightAir/otus_home_work/hw12_13_14_15_calendar/internal/logger"
 	internalgrpc "github.com/LightAir/otus_home_work/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/LightAir/otus_home_work/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/LightAir/otus_home_work/hw12_13_14_15_calendar/internal/storage/memory"
-	sqlstorage "github.com/LightAir/otus_home_work/hw12_13_14_15_calendar/internal/storage/sql"
+	initstorage "github.com/LightAir/otus_home_work/hw12_13_14_15_calendar/internal/storage/init"
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
@@ -23,21 +21,6 @@ var configFile string
 
 func init() {
 	flag.StringVar(&configFile, "config", "/etc/calendar/config.yaml", "Path to configuration file")
-}
-
-func initStorage(cfg *config.Config) (app.Storage, error) {
-	switch cfg.DB.Type {
-	case "mem":
-		return memorystorage.New(), nil
-	case "sql":
-		s := cfg.DB.SQL
-
-		dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", s.User, s.Password, s.Host, s.Port, s.Name)
-
-		return sqlstorage.New(cfg, dsn), nil
-	}
-
-	return nil, fmt.Errorf("unknown database type: %q", cfg.DB.Type)
 }
 
 func main() {
@@ -53,9 +36,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	logg := logger.New(cfg.Logger.Level)
-
-	storage, err := initStorage(cfg)
+	storage, err := initstorage.NewStorage(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -66,8 +47,8 @@ func main() {
 		log.Fatalf("failed to load driver: %v", err)
 	}
 
-	calendar := app.New(logg, storage, cfg)
-
+	logg := logger.New(cfg.Logger.Level)
+	calendar := app.New(storage, cfg)
 	server := internalhttp.NewServer(logg, calendar, cfg)
 
 	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)

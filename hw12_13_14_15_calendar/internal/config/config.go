@@ -5,6 +5,8 @@ type Config struct {
 	DB         DB
 	Server     Server
 	GRPCServer GRPCServer
+	Rmq        Rmq
+	QueueName  string
 }
 
 type LoggerConf struct {
@@ -35,6 +37,13 @@ type GRPCServer struct {
 	Host string
 }
 
-func NewConfig() Config {
-	return Config{}
+type Rmq struct {
+	Host string
+	Port string
+	User string
+	Pswd string
+}
+
+func NewConfig() *Config {
+	return &Config{}
 }

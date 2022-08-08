@@ -19,7 +19,7 @@ func getEvents(firstID uuid.UUID, secondID uuid.UUID, userID uuid.UUID) map[uuid
 			DatetimeEnd:   time.Date(2009, time.November, 10, 23, 15, 0, 0, time.UTC),
 			Description:   "just description",
 			UserID:        userID,
-			WhenToNotify:  "newer",
+			WhenToNotify:  time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 		},
 		secondID: {
 			ID:            secondID,
@@ -28,7 +28,7 @@ func getEvents(firstID uuid.UUID, secondID uuid.UUID, userID uuid.UUID) map[uuid
 			DatetimeEnd:   time.Date(2009, time.November, 11, 23, 15, 0, 0, time.UTC),
 			Description:   "just description",
 			UserID:        userID,
-			WhenToNotify:  "newer",
+			WhenToNotify:  time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 		},
 	}
 }
@@ -151,6 +151,8 @@ func TestCacheMultithreading(t *testing.T) {
 	userID := uuid.New()
 	timeStart := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
 	timeEnd := time.Date(2009, time.November, 10, 23, 15, 0, 0, time.UTC)
+	timeWhen := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
+
 	go func() {
 		defer wg.Done()
 		for i := 0; i < 1_000_000; i++ {
@@ -161,7 +163,7 @@ func TestCacheMultithreading(t *testing.T) {
 				DatetimeEnd:   timeEnd,
 				Description:   "just description",
 				UserID:        userID,
-				WhenToNotify:  "newer",
+				WhenToNotify:  timeWhen,
 			}
 			err := storage.AddEvent(event)
 			require.Nil(t, err)
@@ -178,7 +180,7 @@ func TestCacheMultithreading(t *testing.T) {
 				DatetimeEnd:   timeEnd,
 				Description:   "just description",
 				UserID:        userID,
-				WhenToNotify:  "newer",
+				WhenToNotify:  timeWhen,
 			}
 			err := storage.AddEvent(event)
 			require.Nil(t, err)

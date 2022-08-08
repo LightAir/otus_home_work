@@ -14,10 +14,10 @@ func Parse(filePath string) (*Config, error) {
 	}
 
 	cfg := NewConfig()
-	err = yaml.Unmarshal(configData, &cfg)
+	err = yaml.Unmarshal(configData, cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	return &cfg, err
+	return cfg, err
 }
