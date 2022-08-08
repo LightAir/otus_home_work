@@ -4,6 +4,8 @@ BIN_SENDER := "./bin/calendar_sender"
 BIN_MIGRATION := "./bin/migration"
 
 DOCKER_IMG="calendar:develop"
+DOCKER_IMG_SCHEDULER="scheduler:develop"
+DOCKER_IMG_SENDER="sender:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
@@ -20,9 +22,18 @@ build-img:
 	docker build \
 		--build-arg=LDFLAGS="$(LDFLAGS)" \
 		-t $(DOCKER_IMG) \
-		-f build/Dockerfile .
+		-f build/Dockerfile-cal .
+	docker build \
+		--build-arg=LDFLAGS="$(LDFLAGS)" \
+		-t $(DOCKER_IMG_SCHEDULER) \
+		-f build/Dockerfile-sch .
+	docker build \
+		--build-arg=LDFLAGS="$(LDFLAGS)" \
+		-t $(DOCKER_IMG_SENDER) \
+		-f build/Dockerfile-snd .
 
-run-img: build-img
+run-img:
+	build-img
 	docker run $(DOCKER_IMG)
 
 version: build
@@ -52,4 +63,8 @@ build-migrations:
 migrate: build-migrations
 	$(BIN_MIGRATION) --config=./configs/config.yaml
 
-.PHONY: build run build-img run-img version test lint up down generate migrate build-migrations
+integration-tests:
+	docker-compose -f deployments/docker-compose.test.yaml up --abort-on-container-exit --exit-code-from testruner testruner
+	docker-compose -f deployments/docker-compose.test.yaml down
+
+.PHONY: build run build-img run-img version test lint up down generate migrate build-migrations integration-tests

@@ -1,0 +1,22 @@
+version: "3.4"
+
+services:
+  calendar-test:
+    build:
+      context: ../
+      dockerfile: build/Dockerfile-cal-test
+    restart: always
+    networks:
+      - calendar
+
+  testruner:
+    build:
+      context: ../
+      dockerfile: build/Dockerfile-test
+    depends_on:
+      - calendar-test
+    networks:
+      - calendar
+
+networks:
+  calendar:

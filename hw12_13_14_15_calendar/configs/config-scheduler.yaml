@@ -1,18 +1,18 @@
 logger:
-  level: "info"
+  level: info
 
 db:
-  type: "sql"
+  type: sql
   sql:
-    driver: "pgx"
-    name: "calendar"
-    user: "postgres"
-    password: "postgres"
-    host: "localhost"
-    port: "5432"
+    driver: pgx
+    name: calendar
+    user: postgres
+    password: postgres
+    host: postgres
+    port: 5432
 
 rmq:
-  host: 127.0.0.1
+  host: rabbitmq
   port: 5672
   user: guest
   pswd: guest

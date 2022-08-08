@@ -1,0 +1,26 @@
+# Собираем в гошке
+FROM golang:1.16.2 as build
+
+ENV BIN_TEST /opt/calendar/t
+ENV CODE_DIR /go/src/
+
+WORKDIR ${CODE_DIR}
+COPY . ${CODE_DIR}
+
+# Собираем бинарник
+RUN CGO_ENABLED=0 go test -c -v --tags=integration -o ${BIN_TEST} tests/*
+
+# На выходе тонкий образ
+FROM alpine:3.9
+
+LABEL ORGANIZATION="OTUS Online Education"
+LABEL SERVICE="tests"
+LABEL MAINTAINERS="student@otus.ru"
+
+ENV BIN_TEST /opt/calendar/t
+COPY --from=build ${BIN_TEST} ${BIN_TEST}
+
+ENV CONFIG_FILE /etc/calendar/config-test.yaml
+COPY ./configs/config-test.yaml ${CONFIG_FILE}
+
+CMD ${BIN_TEST} -config ${CONFIG_FILE}
