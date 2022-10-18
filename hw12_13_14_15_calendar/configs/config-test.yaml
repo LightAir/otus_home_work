@@ -1,0 +1,13 @@
+logger:
+  level: info
+
+server:
+  host: calendar-test
+  port: 8095
+
+grpcserver:
+  host: calendar-test
+  port: 8096
+
+db:
+  type: mem

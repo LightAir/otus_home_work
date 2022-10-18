@@ -1,0 +1,13 @@
+logger:
+  level: info
+
+server:
+  host: localhost
+  port: 8095
+
+grpcserver:
+  host: localhost
+  port: 8096
+
+db:
+  type: mem

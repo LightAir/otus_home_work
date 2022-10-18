@@ -1,0 +1,31 @@
+# Собираем в гошке
+FROM golang:1.16.2 as build
+
+ENV BIN_MIGRATE_FILE /opt/calendar/migrate
+ENV CODE_DIR /go/src/
+
+WORKDIR ${CODE_DIR}
+
+COPY . ${CODE_DIR}
+
+# Собираем бинарник миграций
+RUN CGO_ENABLED=0 go build -ldflags "$LDFLAGS" -o ${BIN_MIGRATE_FILE} cmd/migration/*
+
+RUN cp -R ./migrations /migrations
+
+# На выходе тонкий образ
+FROM alpine:3.9
+
+LABEL ORGANIZATION="OTUS Online Education"
+LABEL SERVICE="migration"
+LABEL MAINTAINERS="student@otus.ru"
+
+ENV BIN_MIGRATE_FILE /opt/calendar/migrate
+COPY --from=build ${BIN_MIGRATE_FILE} ${BIN_MIGRATE_FILE}
+
+ENV CONFIG_FILE /etc/calendar/config.yaml
+COPY ./configs/config.yaml ${CONFIG_FILE}
+
+COPY --from=build /migrations /migrations
+
+CMD ${BIN_MIGRATE_FILE} -config ${CONFIG_FILE}

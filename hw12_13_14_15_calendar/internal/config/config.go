@@ -1,9 +1,12 @@
 package config
 
 type Config struct {
-	Logger LoggerConf
-	DB     DB
-	Server Server
+	Logger     LoggerConf
+	DB         DB
+	Server     Server
+	GRPCServer GRPCServer
+	Rmq        Rmq
+	QueueName  string
 }
 
 type LoggerConf struct {
@@ -29,6 +32,18 @@ type Server struct {
 	Host string
 }
 
-func NewConfig() Config {
-	return Config{}
+type GRPCServer struct {
+	Port string
+	Host string
+}
+
+type Rmq struct {
+	Host string
+	Port string
+	User string
+	Pswd string
+}
+
+func NewConfig() *Config {
+	return &Config{}
 }

@@ -1,16 +1,26 @@
 logger:
-  level: "info"
+  level: info
 
 server:
-  host: 127.0.0.1
-  port: 1985
+  host: calendar
+  port: 8080
+
+grpcserver:
+  host: calendar
+  port: 8081
 
 db:
-  type: "sql"
+  type: sql
   sql:
-    driver: "pgx"
-    name: "calendar"
-    user: "postgres"
-    password: "postgres"
-    host: "localhost"
-    port: "5432"
+    driver: pgx
+    name: calendar
+    user: postgres
+    password: postgres
+    host: postgres
+    port: 5432
+
+rmq:
+  host: rabbitmq
+  port: 5672
+  user: guest
+  pswd: guest

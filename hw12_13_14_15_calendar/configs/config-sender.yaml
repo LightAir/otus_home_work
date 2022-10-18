@@ -1,0 +1,10 @@
+logger:
+  level: info
+
+rmq:
+  host: rabbitmq
+  port: 5672
+  user: guest
+  pswd: guest
+
+queuename: "sender"
